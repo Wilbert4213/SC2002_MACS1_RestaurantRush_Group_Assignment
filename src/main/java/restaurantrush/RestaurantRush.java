@@ -1,0 +1,136 @@
+package restaurantrush;
+
+import java.io.PrintStream;
+import java.util.Locale;
+import java.util.Scanner;
+
+/** CLI boundary: parses choices and displays state; GameController owns the rules. */
+public class RestaurantRush {
+    private final GameController game;
+    private final Scanner input;
+    private final PrintStream output;
+
+    public RestaurantRush(GameController game, Scanner input, PrintStream output) {
+        this.game = game;
+        this.input = input;
+        this.output = output;
+    }
+
+    public static void main(String[] args) {
+        new RestaurantRush(new GameController(), new Scanner(System.in), System.out).run();
+    }
+
+    public void run() {
+        output.println("Restaurant Rush - Stage 1");
+        output.println("18 turns, 2 tables. Target: 4 paid customers, $45.00 revenue, 60 average satisfaction.");
+        output.println("Customers choose their own food. Enter help at either prompt for commands.");
+        output.println("Menu:");
+        for (MenuItem item : game.getMenu()) {
+            output.printf("  %s: %s, %d preparation units%n", item.getName(),
+                    Money.format(item.getPriceCents()), item.getPreparationUnits());
+        }
+        while (!game.isFinished()) {
+            game.beginTurn();
+            displayState();
+            if (!chooseTask(true) || !chooseTask(false)) {
+                output.println("Input ended; game stopped before completion. No victory or defeat recorded.");
+                return;
+            }
+            for (String event : game.finishTurn()) {
+                output.println(event);
+            }
+            output.print("End of turn " + game.getTurn() + ": ");
+            displaySummary();
+        }
+        output.println("\nResult: " + (game.isVictory() ? "VICTORY" : "DEFEAT"));
+        displaySummary();
+        output.printf("Targets: paid %d/%d, revenue %s/%s, satisfaction %s/%d%n",
+                game.getPaidCount(), GameController.TARGET_PAID_CUSTOMERS,
+                Money.format(game.getRevenueCents()), Money.format(GameController.TARGET_REVENUE_CENTS),
+                averageText(), GameController.TARGET_SATISFACTION);
+    }
+
+    private boolean chooseTask(boolean waiterPhase) {
+        String role = waiterPhase ? "Waiter" : "Chef";
+        while (true) {
+            output.print(role + "> ");
+            output.flush();
+            if (!input.hasNextLine()) {
+                return false;
+            }
+            String line = input.nextLine().trim();
+            if (line.equalsIgnoreCase("help")) {
+                output.println(waiterPhase
+                        ? "seat <customerId> <tableId> | order <customerId> | serve <customerId> | wait | status | help"
+                        : "cook <customerId> | wait | status | help");
+                continue;
+            }
+            if (line.equalsIgnoreCase("status")) {
+                displayState();
+                continue;
+            }
+            try {
+                String[] parts = line.toLowerCase(Locale.ROOT).split("\\s+");
+                String message;
+                if (parts[0].equals("wait") && parts.length == 1) {
+                    if (waiterPhase) {
+                        game.waitWaiter();
+                    } else {
+                        game.waitChef();
+                    }
+                    message = role + " waits.";
+                } else if (waiterPhase && parts[0].equals("seat") && parts.length == 3) {
+                    message = game.seatCustomer(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+                } else if (waiterPhase && parts[0].equals("order") && parts.length == 2) {
+                    message = game.takeOrder(Integer.parseInt(parts[1]));
+                } else if (waiterPhase && parts[0].equals("serve") && parts.length == 2) {
+                    message = game.serveCustomer(Integer.parseInt(parts[1]));
+                } else if (!waiterPhase && parts[0].equals("cook") && parts.length == 2) {
+                    message = game.prepareOrder(Integer.parseInt(parts[1]));
+                } else {
+                    throw new IllegalArgumentException("Unknown command or wrong number of arguments. Enter help.");
+                }
+                output.println(message);
+                return true;
+            } catch (NumberFormatException exception) {
+                output.println("Invalid choice: customer and table IDs must be whole numbers. Choose again.");
+            } catch (IllegalArgumentException exception) {
+                output.println("Invalid choice: " + exception.getMessage() + " Choose again.");
+            }
+        }
+    }
+
+    private void displayState() {
+        output.printf("%n--- Turn %d/%d ---%n", game.getTurn(), GameController.MAX_TURNS);
+        output.println("Revenue: " + Money.format(game.getRevenueCents()) + " | Paid average: " + averageText());
+        output.println("Waiting queue: " + (game.getWaitingQueue().isEmpty() ? "empty"
+                : game.getWaitingQueue().stream().map(customer -> "C" + customer.getId())
+                        .collect(java.util.stream.Collectors.joining(", "))));
+        for (Table table : game.getTables()) {
+            output.println("Table " + table.getId() + ": " + (table.isFree() ? "free"
+                    : "C" + table.getCustomer().getId()));
+        }
+        for (Customer customer : game.getCustomers()) {
+            Order order = customer.getOrder();
+            output.printf("C%d: %s | satisfaction %d | order %s%n", customer.getId(), customer.getStatus(),
+                    customer.getSatisfaction(), order == null ? "none"
+                            : order.getItem().getName() + " " + order.getStatus() + " "
+                            + order.getCompletedUnits() + "/" + order.getItem().getPreparationUnits()
+                            + " | bill " + Money.format(order.getBillCents()));
+        }
+        output.println("Waiter: " + (game.isWaiterAvailable() ? "1 task: seat / order / serve / wait" : "task used"));
+        output.println("Chef: " + (game.isChefAvailable() ? "1 preparation unit: cook / wait" : "task used"));
+        output.println("Cashier: " + (game.isCashierAvailable() ? "1 automatic payment, oldest eligible first" : "task used"));
+    }
+
+    private String averageText() {
+        return game.getAverageSatisfaction().isPresent()
+                ? String.format(Locale.ROOT, "%.2f", game.getAverageSatisfaction().getAsDouble()) : "N/A";
+    }
+
+    private void displaySummary() {
+        output.printf("served %d | paid %d | unhappy departures %d | revenue %s | paid average %s | turns %d/%d%n",
+                game.getServedCount(), game.getPaidCount(), game.getUnhappyDepartures(),
+                Money.format(game.getRevenueCents()), averageText(), game.getTurn(), GameController.MAX_TURNS);
+    }
+}
