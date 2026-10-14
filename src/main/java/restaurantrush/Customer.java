@@ -2,7 +2,7 @@ package restaurantrush;
 
 import java.util.List;
 
-/** Stage 1 regular customer; behaviour belongs here rather than in the CLI. */
+/** Regular customer and the shared lifecycle for all customer types. */
 public class Customer {
     private final int id;
     private int satisfaction = 100;
@@ -16,6 +16,13 @@ public class Customer {
         return menu.get((id - 1) % menu.size());
     }
 
+    public String getTypeName() { return "Regular"; }
+    public int getWaitingSatisfactionLoss() { return 8; }
+
+    protected int calculateBillCents(MenuItem item) {
+        return item.getPriceCents();
+    }
+
     public void seat() {
         if (status != CustomerStatus.WAITING) {
             throw new IllegalArgumentException("Only a queued customer can be seated.");
@@ -27,7 +34,8 @@ public class Customer {
         if (status != CustomerStatus.SEATED || order != null) {
             throw new IllegalArgumentException("The customer must be seated and have no existing order.");
         }
-        order = new Order(chooseMeal(menu));
+        MenuItem item = chooseMeal(menu);
+        order = new Order(item, calculateBillCents(item));
     }
 
     public void serve(int turn) {
@@ -65,7 +73,7 @@ public class Customer {
         if (status != CustomerStatus.WAITING && status != CustomerStatus.SEATED) {
             return false;
         }
-        satisfaction = Math.max(0, satisfaction - 8);
+        satisfaction = Math.max(0, satisfaction - getWaitingSatisfactionLoss());
         if (satisfaction != 0) {
             return false;
         }

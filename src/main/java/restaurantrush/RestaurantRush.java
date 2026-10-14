@@ -21,9 +21,11 @@ public class RestaurantRush {
     }
 
     public void run() {
-        output.println("Restaurant Rush - Stage 1");
+        output.println("Restaurant Rush - Stage 2");
         output.println("18 turns, 2 tables. Target: 4 paid customers, $45.00 revenue, 60 average satisfaction.");
         output.println("Customers choose their own food. Enter help at either prompt for commands.");
+        output.println("Regulars lose 8 satisfaction while waiting. VIPs lose 5 and get 10% off.");
+        output.println("Critics lose 12 and prefer the dish requiring the most preparation.");
         output.println("Menu:");
         for (MenuItem item : game.getMenu()) {
             output.printf("  %s: %s, %d preparation units%n", item.getName(),
@@ -112,8 +114,9 @@ public class RestaurantRush {
         }
         for (Customer customer : game.getCustomers()) {
             Order order = customer.getOrder();
-            output.printf("C%d: %s | satisfaction %d | order %s%n", customer.getId(), customer.getStatus(),
-                    customer.getSatisfaction(), order == null ? "none"
+            output.printf("C%d (%s): %s | satisfaction %d | waiting loss %d/turn | order %s%n",
+                    customer.getId(), customer.getTypeName(), customer.getStatus(),
+                    customer.getSatisfaction(), customer.getWaitingSatisfactionLoss(), order == null ? "none"
                             : order.getItem().getName() + " " + order.getStatus() + " "
                             + order.getCompletedUnits() + "/" + order.getItem().getPreparationUnits()
                             + " | bill " + Money.format(order.getBillCents()));

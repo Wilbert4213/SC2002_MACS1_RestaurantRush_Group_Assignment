@@ -6,13 +6,15 @@ Repository: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_As
 
 ## Current stage
 
-Stage 1 implements the complete base game: regular customers, three menu items,
-two tables, Waiter, Chef, Cashier, satisfaction, abandonment, payment, and both
-endings. Stage 2 and Stage 3 features are not implemented here.
+Stage 2 adds VIP and Critic customer behaviour to the complete Stage 1 base game.
+The default game still has three menu items, two tables, Waiter, Chef, Cashier,
+satisfaction, abandonment, payment, and both endings. Stage 3 is not implemented.
 
-Stage 1 is awaiting manual verification and PR review. The `stage-1` release tag
-will be created on the verified commit in `main` after the PR is merged. The stage
-table below records release status without claiming unfinished stages are available.
+Stage 1 is manually verified, merged, and available at the immutable
+[`stage-1` tag](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/tree/stage-1).
+Stage 2 was manually verified by the project owner on 14 October 2026 and awaits
+PR merging on `codex/stage-2`.
+Create `stage-2` on the verified commit in `main` after merging its PR.
 
 ## Build, run, and test
 
@@ -53,12 +55,13 @@ java -cp build/classes restaurantrush.RestaurantRush
 $tests = Get-ChildItem src/test/java/restaurantrush/*.java | ForEach-Object FullName
 javac --release 17 -Xlint:all -Werror -cp build/classes -d build/test-classes $tests
 java -cp "build/classes;build/test-classes" restaurantrush.Stage1Tests
+java -cp "build/classes;build/test-classes" restaurantrush.Stage2Tests
 ```
 
 Run tests from the repository folder so the replay files can be found. For a
 clean build in PowerShell, remove `build/` before compiling.
 
-## Playing Stage 1
+## Playing Stage 2
 
 At each turn the CLI shows arrivals, revenue, average satisfaction of paid
 customers, the waiting queue, table occupants, every customer's satisfaction and
@@ -88,10 +91,33 @@ incomplete session with a message and no result; completed games use all 18 turn
 | Cashier | One automatic payment per turn, oldest READY_TO_PAY first; ties by customer ID |
 | Victory | At least 4 paid customers **and** revenue at least $45.00 **and** paid average satisfaction at least 60 |
 
-Customers choose their food by arrival ID, cycling **Pasta → Burger → Salad**:
-C1/C4 choose Pasta, C2/C5 Burger, and C3/C6 Salad. The choice is revealed when the
-order is placed; the manager controls priority, not food selection. This rule is
-deterministic and uses no random seed or network service.
+Regular and VIP customers choose by arrival ID, cycling **Pasta → Burger → Salad**.
+Critics choose the item with the highest preparation-unit count; ties use the first
+such item in menu order. On the current menu Critics always choose Pasta. This
+preference is independent of their arrival ID and requires more kitchen work.
+Choices are revealed when ordering; the manager controls priority, not food
+selection. All choices and arrival types are deterministic, with no random seed
+or network service.
+
+| Customer | Arrival turn | Type | Meal | Bill |
+| --- | --- | --- | --- | --- |
+| C1 | 1 | Regular | Pasta | $18.00 |
+| C2 | 4 | VIP | Burger | $13.50 |
+| C3 | 7 | Regular | Salad | $9.00 |
+| C4 | 10 | Critic | Pasta | $18.00 |
+| C5 | 13 | Regular | Burger | $15.00 |
+| C6 | 16 | Regular | Salad | $9.00 |
+
+| Type | Satisfaction loss per unserved waiting/seated turn | Bill policy |
+| --- | --- | --- |
+| Regular (`Customer`) | 8 | Full menu price |
+| VIP (`VIPCustomer`) | 5 | 90% of menu price, rounded to nearest cent; half cents round up |
+| Critic (`CriticCustomer`) | 12 | Full menu price |
+
+Customer subclasses dispatch loss, meal choice, type labels, and billing. The
+turn controller follows the same service flow for every type and contains no
+customer type checks. Prices remain integer cents; the order locks its bill when
+placed. The CLI displays each type and waiting loss so priorities are visible.
 
 | Menu item | Price | Preparation units |
 | --- | --- | --- |
@@ -109,7 +135,8 @@ deterministic and uses no random seed or network service.
 4. The Cashier takes at most one payment from customers who were READY_TO_PAY on
    an earlier turn. Customers served on an earlier turn finish their full turn of
    eating and become READY_TO_PAY, eligible for payment next turn at earliest.
-5. Waiting and seated customers who have not been served lose 8 satisfaction,
+5. Waiting and seated customers who have not been served lose their type's
+   satisfaction amount (Regular 8, VIP 5, Critic 12),
    clamped at zero. At zero they leave, cancel their unpaid order (including READY
    dishes), and free their table. Served, eating, and READY_TO_PAY customers lose nothing.
 6. Show end-of-turn results. After turn 18, check all three victory targets.
@@ -122,29 +149,56 @@ can pay. Tables remain occupied throughout preparation, eating, and waiting to p
 
 ## Tests and reproducible runs
 
-The regression suite checks the manual's Pasta example (seat turn 1, order turn
+`bash test.sh` runs 24 checks: the original 14 Stage 1 checks and 10 Stage 2 checks.
+It runs the original Stage 1 regression suite with an explicit
+regular-only schedule and the new Stage 2 suite with mixed customers. The same
+controller, domain objects, and CLI are exercised; no stable turn rule was rewritten.
+
+The Stage 1 regression suite checks the manual's Pasta example (seat turn 1, order turn
 2, READY turn 3, serve turn 4, READY_TO_PAY turn 5, pay turn 6 at satisfaction 76),
 arrival timing, staff budgets, retry handling, preparation and payment delays,
 table occupancy, abandonment at zero, cancellation of unfinished/READY orders,
 paid-only averages, complete CLI replays, and end-of-input handling.
 
+Stage 2 checks polymorphic satisfaction and billing, VIP discounts and cent
+rounding, Critic meal preference and tie handling, all customer lifecycle phases,
+mixed arrivals, abandonment, unpaid revenue exclusion, input retries, and full
+victory/defeat replays. The original 14 Stage 1 checks retain their expected
+regular-only results through a package-private schedule constructor used by tests.
+
 Replay inputs exercise the real CLI with one Waiter line and one Chef line per
 turn. Reproduce them with:
 
 ```sh
-bash run.sh < tests/replays/victory.txt
-bash run.sh < tests/replays/defeat.txt
+bash run.sh < tests/replays/stage2-victory.txt
+bash run.sh < tests/replays/stage2-defeat.txt
 ```
 
 | Fixture | Turns | Served | Paid | Unhappy departures | Revenue | Paid average | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `tests/replays/victory.txt` | 18 | 5 | 5 | 0 | $75.00 | 74.40 | VICTORY |
-| `tests/replays/defeat.txt` | 18 | 0 | 0 | 2 | $0.00 | N/A | DEFEAT |
+| `tests/replays/stage2-victory.txt` | 18 | 5 | 5 | 0 | $73.50 | 73.00 | VICTORY |
+| `tests/replays/stage2-defeat.txt` | 18 | 0 | 0 | 2 | $0.00 | N/A | DEFEAT |
 
-The victory run leaves C6's Salad READY but unpaid at the end. The defeat run
-chooses Wait for both staff every turn; C1 and C2 abandon the queue. Tests assert
-these outcomes rather than relying on a human to read the output.
+The victory run leaves C6's Salad READY but unpaid at the end. C2 pays $13.50 at
+satisfaction 85; C4 pays $18.00 at satisfaction 52. The defeat run chooses Wait
+for both staff every turn; C1 leaves on turn 13 and C4 on turn 18. C2's slower VIP
+decay leaves it waiting at satisfaction 25. Tests assert these outcomes.
 
+The original `victory.txt` and `defeat.txt` fixtures remain unchanged for Stage 1
+regression. At `stage-1`, those runs produce $75.00/74.40 and $0.00/N/A respectively.
+To play the historical Stage 1 independently, create a separate checkout:
+
+```sh
+git worktree add --detach ../RestaurantRush-stage-1 stage-1
+cd ../RestaurantRush-stage-1
+bash test.sh
+bash run.sh < tests/replays/victory.txt
+```
+
+Return to the main project folder before continuing Stage 2 work.
+
+The terminal [Stage 2 verification plan](tests/STAGE2_VERIFICATION.md) provides
+commands, expected outcomes, and per-turn VIP/Critic checks.
 For manual verification, run `bash run.sh`, enter `help`, and play a full game.
 Try an invalid choice, observe READY → SERVED → READY_TO_PAY → PAID across turns,
 and use the replay files if you want to compare exact expected results.
@@ -162,8 +216,8 @@ group if it is not available in your environment. Recheck requirements against
 the manual before releasing each stage.
 
 1. Start with a clean working tree. Fetch and fast-forward `main` from `origin/main`.
-2. Create your feature branch from the updated `main`; this Stage 1 branch is
-   `codex/stage-1`. Use `codex/` for agent-created branches unless instructed otherwise.
+2. Create your feature branch from the updated `main`; the current Stage 2 branch is
+   `codex/stage-2`. Use `codex/` for agent-created branches unless instructed otherwise.
 3. Implement only the current stage. Keep the CLI for parsing/display and put
    rules in domain and control classes. Keep responsibilities clear and code
    straightforward; add abstractions only when they serve actual behaviour.
@@ -184,17 +238,17 @@ Example start:
 git switch main
 git fetch origin
 git pull --ff-only origin main
-git switch -c codex/stage-1
+git switch -c codex/stage-2
 ```
 
-Example release **after Stage 1 has been reviewed and merged**:
+Example release **after Stage 2 has been reviewed and merged**:
 
 ```sh
 git switch main
 git pull --ff-only origin main
 bash test.sh
-git tag -a stage-1 -m "Stage 1: verified basic restaurant operation"
-git push origin stage-1
+git tag -a stage-2 -m "Stage 2: verified customer behaviour"
+git push origin stage-2
 ```
 
 Do not run release commands while review is pending. For later stages use their
@@ -208,8 +262,8 @@ incrementally. A description of a stage alone is not evidence of its implementat
 
 | Stage | Scope | Required Git tag | Status |
 | --- | --- | --- | --- |
-| 1 | Regular customers, menu, Waiter/Chef/Cashier, full base game, both endings | `stage-1` | Implemented; manual review and release tag pending |
-| 2 | VIP and Critic customer behaviour through customer polymorphism | `stage-2` | Not started |
+| 1 | Regular customers, menu, Waiter/Chef/Cashier, full base game, both endings | `stage-1` | Verified and merged; tag published |
+| 2 | VIP and Critic customer behaviour through customer polymorphism | `stage-2` | Manually verified; merge and release tag pending |
 | 3 | Host, ComboMeal composition, Happy Hour pricing policy | `stage-3` | Not started |
 
 ### Stage 1 baseline
@@ -221,26 +275,37 @@ one-task budget in `Staff`. `MenuItem` stores immutable dish definitions;
 `Money` formats integer-cent prices. `RestaurantRush` is the CLI boundary.
 The tests and replay inputs are under `src/test/` and `tests/replays/`.
 
-Stage 1 contains no VIP, Critic, Host, ComboMeal, or Happy Hour implementation.
+At `stage-1`, the source contains no VIP, Critic, Host, ComboMeal, or Happy Hour
+implementation. That tag preserves the original code unchanged.
 
-### Transition 1 → 2 — pending
+### Transition 1 → 2 — implemented
 
-Add VIP and Critic alongside regular customers, keeping six arrivals and including
-at least one of each new type in a reproducible base run. VIPs lose 5 satisfaction
-per waiting turn and receive 10% off. Critics lose 12 and pay full price; define
-and document their distinct preference or service reaction. Customer objects
-must dispatch these differences; do not add a chain of customer type checks to
-the turn controller. Preserve service flow and the three victory criteria.
+[Compare verified Stage 1 with the Stage 2 feature branch](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/compare/stage-1...codex/stage-2).
+After Stage 2 is released, use `stage-1...stage-2` for the immutable tag comparison.
 
-**Complete this transition record in the Stage 2 PR:**
-
-| Evidence | Actual change |
+| New file | Responsibility |
 | --- | --- |
-| New files | Pending; list actual paths and responsibilities |
-| Existing files changed | Pending; list each path and why it changed |
-| Deleted files | Pending; list paths and reasons, or explicitly state none |
-| Commit/compare link | Pending until the release exists; then link `stage-1...stage-2` on GitHub |
-| Regression evidence | Pending; record test results proving Stage 1 behaviour still works |
+| `src/main/java/restaurantrush/VIPCustomer.java` | Overrides patience, type label, and 10%-discount billing |
+| `src/main/java/restaurantrush/CriticCustomer.java` | Overrides impatience, type label, and preparation-based meal preference |
+| `src/test/java/restaurantrush/Stage2Tests.java` | Customer behaviour, shared lifecycle, and mixed-game regression checks |
+| `tests/replays/stage2-victory.txt` | Reproducible mixed-customer victory input |
+| `tests/replays/stage2-defeat.txt` | Reproducible mixed-customer defeat input |
+| `tests/STAGE2_VERIFICATION.md` | Terminal verification procedure and expected results |
+
+| Existing file changed | Reason |
+| --- | --- |
+| `src/main/java/restaurantrush/Customer.java` | Adds overridable loss/bill/type behaviour and dispatches it from the existing lifecycle |
+| `src/main/java/restaurantrush/Order.java` | Accepts and stores a bill calculated at ordering; retains the original full-price constructor |
+| `src/main/java/restaurantrush/GameController.java` | Registers the six mixed arrivals; adds a test schedule constructor while retaining all turn rules |
+| `src/main/java/restaurantrush/RestaurantRush.java` | Identifies Stage 2 and displays customer types and loss rates through customer methods |
+| `src/test/java/restaurantrush/Stage1Tests.java` | Explicitly selects six regular customers so original regression expectations remain unchanged |
+| `test.sh` | Runs both stage test suites |
+| `README.md` | Documents behaviours, actual changes, release status, and verification |
+
+**Deleted files:** none. No Stage 1 file was removed or renamed. Staff limits,
+arrival timing, preparation, serving, eating, payment, abandonment flow, tables,
+and victory criteria remain the same. The original 14 regression checks pass;
+the mixed Stage 2 run demonstrates the new patience, pricing, and preference.
 
 ### Transition 2 → 3 — pending
 
@@ -274,7 +339,7 @@ do not introduce unused future-stage machinery in an earlier snapshot.
 
 ## Assessment and submission ownership
 
-Part 7 allocates marks as follows. This Stage 1 work covers code, reproducible
+Part 7 allocates marks as follows. This Stage 2 work covers code, reproducible
 tests, and repository practice. Another group member will handle the PDF report
 and UML; coordinate later so the final diagrams match Stage 3 code.
 

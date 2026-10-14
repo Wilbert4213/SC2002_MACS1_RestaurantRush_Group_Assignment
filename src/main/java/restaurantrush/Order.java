@@ -10,8 +10,12 @@ public class Order {
     private OrderStatus status = OrderStatus.PLACED;
 
     public Order(MenuItem item) {
+        this(item, item.getPriceCents());
+    }
+
+    public Order(MenuItem item, int billCents) {
         this.item = item;
-        billCents = item.getPriceCents();
+        this.billCents = billCents;
     }
 
     public void prepare(int turn) {
