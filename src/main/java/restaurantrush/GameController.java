@@ -14,12 +14,13 @@ public class GameController {
     public static final int TARGET_REVENUE_CENTS = 4500;
     public static final int TARGET_SATISFACTION = 60;
 
-    // Customer IDs cycle through this order: Pasta, Burger, Salad.
+    // Regular and VIP customers cycle through this order; Critics choose their preference.
     private final List<MenuItem> menu = List.of(
             new MenuItem("Pasta", 1800, 2),
             new MenuItem("Burger", 1500, 1),
             new MenuItem("Salad", 900, 1));
     private final List<Customer> customers = new ArrayList<>();
+    private final List<Customer> scheduledCustomers;
     private final Deque<Customer> waitingQueue = new ArrayDeque<>();
     private final List<Table> tables = List.of(new Table(1), new Table(2));
     private final Waiter waiter = new Waiter();
@@ -33,6 +34,16 @@ public class GameController {
     private int servedCount;
     private int unhappyDepartures;
 
+    public GameController() {
+        this(List.of(new Customer(1), new VIPCustomer(2), new Customer(3),
+                new CriticCustomer(4), new Customer(5), new Customer(6)));
+    }
+
+    // Tests can replay the regular-only Stage 1 setup using the same turn rules.
+    GameController(List<Customer> scheduledCustomers) {
+        this.scheduledCustomers = List.copyOf(scheduledCustomers);
+    }
+
     public void beginTurn() {
         if (turnActive || isFinished()) {
             throw new IllegalStateException("Finish the current turn before starting another; games last 18 turns.");
@@ -43,7 +54,7 @@ public class GameController {
         chef.startTurn();
         cashier.startTurn();
         if ((turn - 1) % 3 == 0) {
-            Customer customer = new Customer(customers.size() + 1);
+            Customer customer = scheduledCustomers.get(customers.size());
             customers.add(customer);
             waitingQueue.addLast(customer);
         }

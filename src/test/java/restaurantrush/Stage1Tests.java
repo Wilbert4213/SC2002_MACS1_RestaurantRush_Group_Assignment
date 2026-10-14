@@ -66,6 +66,11 @@ public final class Stage1Tests {
         throw new AssertionError("Expected a turn-boundary error.");
     }
 
+    private static GameController regularGame() {
+        return new GameController(List.of(new Customer(1), new Customer(2), new Customer(3),
+                new Customer(4), new Customer(5), new Customer(6)));
+    }
+
     private static void idleTurn(GameController game) {
         game.beginTurn();
         game.waitWaiter();
@@ -74,7 +79,7 @@ public final class Stage1Tests {
     }
 
     private static void menuAndChoices() {
-        GameController game = new GameController();
+        GameController game = regularGame();
         List<MenuItem> menu = game.getMenu();
         check(menu.size() == 3, "Exactly three base dishes.");
         check(menu.get(0).getName().equals("Pasta") && menu.get(0).getPriceCents() == 1800
@@ -90,7 +95,7 @@ public final class Stage1Tests {
     }
 
     private static void arrivalsAndDuration() {
-        GameController game = new GameController();
+        GameController game = regularGame();
         check(game.getAverageSatisfaction().isEmpty(), "No payments means N/A.");
         expectStateError(game::waitWaiter);
         for (int turn = 1; turn <= 18; turn++) {
@@ -112,7 +117,7 @@ public final class Stage1Tests {
     }
 
     private static void pastaTimeline() {
-        GameController game = new GameController();
+        GameController game = regularGame();
         game.beginTurn();
         game.seatCustomer(1, 1);
         game.waitChef();
@@ -151,7 +156,7 @@ public final class Stage1Tests {
     }
 
     private static void invalidWaiterChoices() {
-        GameController game = new GameController();
+        GameController game = regularGame();
         game.beginTurn();
         expectInvalid(() -> game.seatCustomer(99, 1));
         expectInvalid(() -> game.seatCustomer(1, 3));
@@ -179,7 +184,7 @@ public final class Stage1Tests {
     }
 
     private static void staffBudgets() {
-        GameController game = new GameController();
+        GameController game = regularGame();
         game.beginTurn();
         expectInvalid(game::waitChef);
         game.seatCustomer(1, 1);
@@ -202,7 +207,7 @@ public final class Stage1Tests {
     private static void oneUnitTiming() {
         Customer customer = new Customer(2);
         customer.seat();
-        customer.placeOrder(new GameController().getMenu());
+        customer.placeOrder(regularGame().getMenu());
         Chef chef = new Chef();
         chef.prepare(customer, 6);
         expectInvalid(() -> customer.serve(6));
@@ -218,7 +223,7 @@ public final class Stage1Tests {
 
     private static void abandonment() {
         for (int units = 0; units <= 2; units++) {
-            GameController game = new GameController();
+            GameController game = regularGame();
             game.beginTurn();
             game.seatCustomer(1, 1);
             game.waitChef();
@@ -269,7 +274,7 @@ public final class Stage1Tests {
     }
 
     private static void servicePriority() {
-        GameController game = new GameController();
+        GameController game = regularGame();
         String choices = "seat 1 1\nwait\norder 1\ncook 1\nwait\ncook 1\n"
                 + "seat 2 2\nwait\norder 2\ncook 2\nserve 2\nwait\nserve 1\nwait\nwait\nwait\n";
         runCli(game, choices);
@@ -292,7 +297,7 @@ public final class Stage1Tests {
                 + "serve 2\nwait\nwait\nwait\nseat 3 1\nwait\norder 3\ncook 3\n"
                 + "serve 3\nwait\nseat 4 2\nwait\norder 4\ncook 4\nwait\ncook 4\n"
                 + "serve 4\nwait\nwait\nwait\nwait\nwait\n";
-        GameController game = new GameController();
+        GameController game = regularGame();
         String output = runCli(game, choices);
         check(!output.contains("Invalid choice") && game.isFinished(), "Delayed-service run is legal and complete.");
         check(game.getPaidCount() == 4 && game.getRevenueCents() == 6000, "Count and revenue targets met.");
@@ -300,7 +305,7 @@ public final class Stage1Tests {
     }
 
     private static void victoryReplay(String choices) {
-        GameController game = new GameController();
+        GameController game = regularGame();
         String output = runCli(game, choices);
         check(game.isFinished() && game.isVictory() && output.contains("Result: VICTORY"), "Victory replay finishes.");
         check(game.getTurn() == 18 && game.getPaidCount() == 5 && game.getServedCount() == 5, "Five paid in 18 turns.");
@@ -312,7 +317,7 @@ public final class Stage1Tests {
     }
 
     private static void defeatReplay(String choices) {
-        GameController game = new GameController();
+        GameController game = regularGame();
         String output = runCli(game, choices);
         check(game.isFinished() && !game.isVictory() && output.contains("Result: DEFEAT"), "Defeat replay finishes.");
         check(game.getPaidCount() == 0 && game.getServedCount() == 0 && game.getRevenueCents() == 0,
@@ -324,14 +329,14 @@ public final class Stage1Tests {
         String invalid = "\nhelp\nstatus\nunknown\nseat x 1\nseat 2147483648 1\nseat 1 3\norder 1\nserve 1\n";
         String choices = victory.replaceFirst("seat 1 1\\nwait\\n", invalid
                 + "seat 1 1\nhelp\nstatus\ncook 99\ncook 1\nwait\n");
-        GameController game = new GameController();
+        GameController game = regularGame();
         String output = runCli(game, choices);
         check(game.isVictory() && game.getRevenueCents() == 7500, "Invalid CLI choices preserve the replay.");
         check(output.contains("Invalid choice") && output.contains("Choose again"), "Useful retry messages.");
     }
 
     private static void endOfInput() {
-        GameController game = new GameController();
+        GameController game = regularGame();
         String output = runCli(game, "seat 1 1\n");
         check(!game.isFinished() && game.getTurn() == 1, "EOF does not auto-play remaining turns.");
         check(output.contains("Input ended") && !output.contains("Result:"), "EOF gives a clear incomplete-game message.");
