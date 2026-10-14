@@ -12,7 +12,8 @@ satisfaction, abandonment, payment, and both endings. Stage 3 is not implemented
 
 Stage 1 is manually verified, merged, and available at the immutable
 [`stage-1` tag](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/tree/stage-1).
-Stage 2 is awaiting manual verification and PR review on `codex/stage-2`.
+Stage 2 was manually verified by the project owner on 14 October 2026 and awaits
+PR merging on `codex/stage-2`.
 Create `stage-2` on the verified commit in `main` after merging its PR.
 
 ## Build, run, and test
@@ -262,7 +263,7 @@ incrementally. A description of a stage alone is not evidence of its implementat
 | Stage | Scope | Required Git tag | Status |
 | --- | --- | --- | --- |
 | 1 | Regular customers, menu, Waiter/Chef/Cashier, full base game, both endings | `stage-1` | Verified and merged; tag published |
-| 2 | VIP and Critic customer behaviour through customer polymorphism | `stage-2` | Implemented; manual review and release tag pending |
+| 2 | VIP and Critic customer behaviour through customer polymorphism | `stage-2` | Manually verified; merge and release tag pending |
 | 3 | Host, ComboMeal composition, Happy Hour pricing policy | `stage-3` | Not started |
 
 ### Stage 1 baseline
