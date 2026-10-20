@@ -10,8 +10,12 @@ public class Waiter extends Staff {
     }
 
     public void takeOrder(Customer customer, List<MenuItem> menu) {
+        takeOrder(customer, menu, false);
+    }
+
+    public void takeOrder(Customer customer, List<MenuItem> menu, boolean happyHourActive) {
         requireAvailable();
-        customer.placeOrder(menu);
+        customer.placeOrder(menu, happyHourActive);
         completeTask();
     }
 
