@@ -15,15 +15,30 @@ public class GameController {
     public static final int TARGET_SATISFACTION = 60;
 
     // Regular and VIP customers cycle through this order; Critics choose their preference.
-    private final List<MenuItem> menu = List.of(
-            new MenuItem("Pasta", 1800, 2),
-            new MenuItem("Burger", 1500, 1),
-            new MenuItem("Salad", 900, 1));
+    private final boolean stage3Enabled;
+    private final List<MenuItem> menu;
+    
+    private static List<MenuItem> createMenu() {
+        MenuItem pasta = new MenuItem("Pasta", 1800, 2);
+        MenuItem burger = new MenuItem("Burger", 1500, 1);
+        MenuItem salad = new MenuItem("Salad", 900, 1);
+
+        ComboMeal saladBurger = new ComboMeal(salad, burger);
+        ComboMeal saladPasta = new ComboMeal(salad, pasta);
+        ComboMeal burgerPasta = new ComboMeal(burger, pasta);
+
+        return List.of(
+            pasta, burger, salad,
+            saladBurger, saladPasta, burgerPasta
+        );
+    }
+
     private final List<Customer> customers = new ArrayList<>();
     private final List<Customer> scheduledCustomers;
     private final Deque<Customer> waitingQueue = new ArrayDeque<>();
     private final List<Table> tables = List.of(new Table(1), new Table(2));
     private final Waiter waiter = new Waiter();
+    private final Host host = new Host();
     private final Chef chef = new Chef();
     private final Cashier cashier = new Cashier();
     private int turn;
@@ -33,15 +48,35 @@ public class GameController {
     private int paidSatisfactionTotal;
     private int servedCount;
     private int unhappyDepartures;
-
+    private boolean happyHourUsed;
+    private int happyHourStartTurn = -1;
+    
     public GameController() {
-        this(List.of(new Customer(1), new VIPCustomer(2), new Customer(3),
-                new CriticCustomer(4), new Customer(5), new Customer(6)));
+        this(List.of(
+            new Customer(1),
+            new VIPCustomer(2),
+            new Customer(3),
+            new CriticCustomer(4),
+            new Customer(5),
+            new Customer(6)
+        ), true);
     }
 
-    // Tests can replay the regular-only Stage 1 setup using the same turn rules.
     GameController(List<Customer> scheduledCustomers) {
+        this(scheduledCustomers, false);
+    }
+
+    GameController(List<Customer> scheduledCustomers, boolean stage3Enabled) {
         this.scheduledCustomers = List.copyOf(scheduledCustomers);
+        this.stage3Enabled = stage3Enabled;
+
+        this.menu = stage3Enabled
+            ? createMenu()
+            : List.of(
+                new MenuItem("Pasta", 1800, 2),
+                new MenuItem("Burger", 1500, 1),
+                new MenuItem("Salad", 900, 1)
+            );
     }
 
     public void beginTurn() {
@@ -51,12 +86,17 @@ public class GameController {
         turn++;
         turnActive = true;
         waiter.startTurn();
+        host.startTurn();
         chef.startTurn();
         cashier.startTurn();
         if ((turn - 1) % 3 == 0) {
             Customer customer = scheduledCustomers.get(customers.size());
             customers.add(customer);
             waitingQueue.addLast(customer);
+        }
+        
+        if (isHappyHourActive()) {
+            restoreHappyHourSatisfaction();
         }
     }
 
@@ -71,10 +111,32 @@ public class GameController {
         return "Customer " + customerId + " seated at table " + tableId + ".";
     }
 
+    public String hostSeatCustomer(int customerId, int tableId) {
+        requireActiveTurn();
+
+        Customer customer = getCustomer(customerId);
+
+        if (!waitingQueue.contains(customer)) {
+            throw new IllegalArgumentException(
+                    "Customer " + customerId + " is not in the waiting queue.");
+        }
+
+        host.seat(customer, getTable(tableId));
+        waitingQueue.remove(customer);
+
+        return "Host seated customer " + customerId
+                + " at table " + tableId + ".";
+    }
+
+    public void waitHost() {
+        requireActiveTurn();
+        host.waitForTurn();
+    }
+
     public String takeOrder(int customerId) {
         requireWaiterPhase();
         Customer customer = getCustomer(customerId);
-        waiter.takeOrder(customer, menu);
+        waiter.takeOrder(customer, menu, isHappyHourActive());
         Order order = customer.getOrder();
         return "Customer " + customerId + " chose " + order.getItem().getName()
                 + " (" + Money.format(order.getBillCents()) + ", "
@@ -109,8 +171,8 @@ public class GameController {
 
     public List<String> finishTurn() {
         requireActiveTurn();
-        if (waiter.isAvailable() || chef.isAvailable()) {
-            throw new IllegalStateException("Choose a task or Wait for both the Waiter and Chef first.");
+        if ((stage3Enabled && host.isAvailable()) || waiter.isAvailable() || chef.isAvailable()) {
+            throw new IllegalStateException("Choose a task or Wait for the Host, Waiter and Chef first.");
         }
         List<String> events = new ArrayList<>();
 
@@ -155,8 +217,15 @@ public class GameController {
 
     private void requireWaiterPhase() {
         requireActiveTurn();
+
+        if (stage3Enabled && host.isAvailable()) {
+            throw new IllegalArgumentException(
+                "The Host must act or wait before the Waiter.");
+        }
+
         if (!chef.isAvailable()) {
-            throw new IllegalArgumentException("The Waiter must act before the Chef.");
+            throw new IllegalArgumentException(
+                "The Waiter must act before the Chef.");
         }
     }
 
@@ -177,6 +246,48 @@ public class GameController {
                 .orElseThrow(() -> new IllegalArgumentException("Choose table 1 or 2."));
     }
 
+    public boolean canActivateHappyHour() {
+        return stage3Enabled && turnActive && !happyHourUsed
+        && host.isAvailable()
+        && waiter.isAvailable()
+        && chef.isAvailable();
+    }
+
+    public void activateHappyHour() {
+        if (!canActivateHappyHour()) {
+            throw new IllegalStateException(
+                    "Happy Hour can only be activated once, at the start of a turn.");
+        }
+
+        happyHourUsed = true;
+        happyHourStartTurn = turn;
+
+        restoreHappyHourSatisfaction();
+    }
+
+    public boolean isHappyHourActive() {
+        return happyHourUsed
+                && turn >= happyHourStartTurn
+                && turn < happyHourStartTurn + 2;
+    }
+
+    public int getHappyHourRemainingTurns() {
+        if (!isHappyHourActive()) {
+            return 0;
+        }
+        return happyHourStartTurn + 2 - turn;
+    }
+
+    public boolean isHappyHourUsed() {
+        return happyHourUsed;
+    }
+
+    private void restoreHappyHourSatisfaction() {
+        for (Customer customer : customers) {
+            customer.restoreSatisfaction(15);
+        }
+    }
+
     public boolean isFinished() { return turn == MAX_TURNS && !turnActive; }
 
     public boolean isVictory() {
@@ -188,6 +299,10 @@ public class GameController {
     public OptionalDouble getAverageSatisfaction() {
         return paidCount == 0 ? OptionalDouble.empty()
                 : OptionalDouble.of((double) paidSatisfactionTotal / paidCount);
+    }
+
+    public boolean isStage3Enabled() {
+        return stage3Enabled;
     }
 
     public int getTurn() { return turn; }
@@ -202,4 +317,5 @@ public class GameController {
     public boolean isWaiterAvailable() { return waiter.isAvailable(); }
     public boolean isChefAvailable() { return chef.isAvailable(); }
     public boolean isCashierAvailable() { return cashier.isAvailable(); }
+    public boolean isHostAvailable() { return host.isAvailable(); }
 }

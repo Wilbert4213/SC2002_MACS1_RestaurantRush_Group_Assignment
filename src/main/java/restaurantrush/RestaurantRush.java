@@ -4,7 +4,10 @@ import java.io.PrintStream;
 import java.util.Locale;
 import java.util.Scanner;
 
-/** CLI boundary: parses choices and displays state; GameController owns the rules. */
+/**
+ * CLI boundary: parses choices and displays state; GameController owns the
+ * rules.
+ */
 public class RestaurantRush {
     private final GameController game;
     private final Scanner input;
@@ -21,7 +24,7 @@ public class RestaurantRush {
     }
 
     public void run() {
-        output.println("Restaurant Rush - Stage 2");
+        output.println(game.isStage3Enabled() ? "Restaurant Rush - Stage 3" : "Restaurant Rush - Legacy Mode");
         output.println("18 turns, 2 tables. Target: 4 paid customers, $45.00 revenue, 60 average satisfaction.");
         output.println("Customers choose their own food. Enter help at either prompt for commands.");
         output.println("Regulars lose 8 satisfaction while waiting. VIPs lose 5 and get 10% off.");
@@ -34,6 +37,18 @@ public class RestaurantRush {
         while (!game.isFinished()) {
             game.beginTurn();
             displayState();
+            if (game.isStage3Enabled()) {
+                if (!chooseHappyHour()) {
+                    output.println("Input ended; game stopped.");
+                    return;
+                }
+
+                if (!chooseHostTask()) {
+                    output.println("Input ended; game stopped before completion. No victory or defeat recorded.");
+                    return;
+                }
+            }
+
             if (!chooseTask(true) || !chooseTask(false)) {
                 output.println("Input ended; game stopped before completion. No victory or defeat recorded.");
                 return;
@@ -50,6 +65,54 @@ public class RestaurantRush {
                 game.getPaidCount(), GameController.TARGET_PAID_CUSTOMERS,
                 Money.format(game.getRevenueCents()), Money.format(GameController.TARGET_REVENUE_CENTS),
                 averageText(), GameController.TARGET_SATISFACTION);
+    }
+
+    private boolean chooseHostTask() {
+        while (true) {
+            output.print("Host> ");
+            output.flush();
+
+            if (!input.hasNextLine()) {
+                return false;
+            }
+
+            String line = input.nextLine().trim();
+
+            if (line.equalsIgnoreCase("help")) {
+                output.println("seat <customerId> <tableId> | wait | status | help");
+                continue;
+            }
+
+            if (line.equalsIgnoreCase("status")) {
+                displayState();
+                continue;
+            }
+
+            try {
+                String[] parts = line.toLowerCase(Locale.ROOT).split("\\s+");
+                String message;
+
+                if (parts.length == 1 && parts[0].equals("wait")) {
+                    game.waitHost();
+                    message = "Host waits.";
+                } else if (parts.length == 3 && parts[0].equals("seat")) {
+                    message = game.hostSeatCustomer(
+                            Integer.parseInt(parts[1]),
+                            Integer.parseInt(parts[2]));
+                } else {
+                    throw new IllegalArgumentException(
+                            "Unknown command. Enter help.");
+                }
+
+                output.println(message);
+                return true;
+
+            } catch (NumberFormatException exception) {
+                output.println("Invalid choice: IDs must be whole numbers.");
+            } catch (IllegalArgumentException exception) {
+                output.println("Invalid choice: " + exception.getMessage());
+            }
+        }
     }
 
     private boolean chooseTask(boolean waiterPhase) {
@@ -108,6 +171,14 @@ public class RestaurantRush {
         output.println("Waiting queue: " + (game.getWaitingQueue().isEmpty() ? "empty"
                 : game.getWaitingQueue().stream().map(customer -> "C" + customer.getId())
                         .collect(java.util.stream.Collectors.joining(", "))));
+        output.println("Happy Hour: "
+        + (game.isHappyHourActive()
+            ? "ACTIVE (" + game.getHappyHourRemainingTurns()
+                    + " turns remaining)"
+            : game.isHappyHourUsed()
+                ? "Already used"
+                : "Available"));
+
         for (Table table : game.getTables()) {
             output.println("Table " + table.getId() + ": " + (table.isFree() ? "free"
                     : "C" + table.getCustomer().getId()));
@@ -118,22 +189,56 @@ public class RestaurantRush {
                     customer.getId(), customer.getTypeName(), customer.getStatus(),
                     customer.getSatisfaction(), customer.getWaitingSatisfactionLoss(), order == null ? "none"
                             : order.getItem().getName() + " " + order.getStatus() + " "
-                            + order.getCompletedUnits() + "/" + order.getItem().getPreparationUnits()
-                            + " | bill " + Money.format(order.getBillCents()));
+                                    + order.getCompletedUnits() + "/" + order.getItem().getPreparationUnits()
+                                    + " | bill " + Money.format(order.getBillCents()));
         }
         output.println("Waiter: " + (game.isWaiterAvailable() ? "1 task: seat / order / serve / wait" : "task used"));
+        output.println("Host: " + (game.isHostAvailable()? "1 task: seat / wait" : "task used"));
         output.println("Chef: " + (game.isChefAvailable() ? "1 preparation unit: cook / wait" : "task used"));
-        output.println("Cashier: " + (game.isCashierAvailable() ? "1 automatic payment, oldest eligible first" : "task used"));
+        output.println(
+                "Cashier: " + (game.isCashierAvailable() ? "1 automatic payment, oldest eligible first" : "task used"));
     }
 
     private String averageText() {
         return game.getAverageSatisfaction().isPresent()
-                ? String.format(Locale.ROOT, "%.2f", game.getAverageSatisfaction().getAsDouble()) : "N/A";
+                ? String.format(Locale.ROOT, "%.2f", game.getAverageSatisfaction().getAsDouble())
+                : "N/A";
     }
 
     private void displaySummary() {
         output.printf("served %d | paid %d | unhappy departures %d | revenue %s | paid average %s | turns %d/%d%n",
                 game.getServedCount(), game.getPaidCount(), game.getUnhappyDepartures(),
                 Money.format(game.getRevenueCents()), averageText(), game.getTurn(), GameController.MAX_TURNS);
+    }
+
+    private boolean chooseHappyHour() {
+
+        // Happy Hour can only be activated once per game.
+        if (game.isHappyHourUsed()) {
+            return true;
+        }
+
+        while (true) {
+            output.print("Activate Happy Hour? (yes/no)> ");
+            output.flush();
+
+            if (!input.hasNextLine()) {
+                return false;
+            }
+
+            String answer = input.nextLine().trim();
+
+            if (answer.equalsIgnoreCase("yes")) {
+                game.activateHappyHour();
+                output.println("Happy Hour activated for 2 turns!");
+                return true;
+            }
+
+            if (answer.equalsIgnoreCase("no")) {
+                return true;
+            }
+
+            output.println("Invalid input. Enter yes or no.");
+        }
     }
 }
