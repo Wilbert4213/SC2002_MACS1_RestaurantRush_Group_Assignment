@@ -62,7 +62,7 @@ public final class Stage2Tests {
     }
 
     private static void arrivalTypes() {
-        GameController game = new GameController();
+        GameController game = stage2Game();
         String[] names = {"Regular", "VIP", "Regular", "Critic", "Regular", "Regular"};
         Class<?>[] types = {Customer.class, VIPCustomer.class, Customer.class,
                 CriticCustomer.class, Customer.class, Customer.class};
@@ -179,7 +179,7 @@ public final class Stage2Tests {
     }
 
     private static void criticAbandonment() {
-        GameController game = new GameController();
+        GameController game = stage2Game();
         for (int turn = 1; turn <= 9; turn++) idleTurn(game);
         game.beginTurn();
         game.seatCustomer(4, 1);
@@ -216,7 +216,7 @@ public final class Stage2Tests {
     private static void invalidCliChoices(String victory) {
         String invalid = "order 1\nseat 99 1\nseat 1 3\nseat 1 1\ncook 1\nwait\n";
         String choices = victory.replaceFirst("seat 1 1\\nwait\\n", invalid);
-        GameController game = new GameController();
+        GameController game = stage2Game();
         String output = runCli(game, choices);
         check(game.isVictory() && game.getTurn() == 18 && game.getPaidCount() == 5
                 && game.getRevenueCents() == 7350
@@ -227,7 +227,7 @@ public final class Stage2Tests {
     }
 
     private static void victoryReplay(String choices) {
-        GameController game = new GameController();
+        GameController game = stage2Game();
         String output = runCli(game, choices);
         check(game.isFinished() && game.isVictory() && output.contains("Result: VICTORY"), "Victory result.");
         check(game.getTurn() == 18 && game.getPaidCount() == 5 && game.getServedCount() == 5,
@@ -248,7 +248,7 @@ public final class Stage2Tests {
     }
 
     private static void defeatReplay(String choices) {
-        GameController game = new GameController();
+        GameController game = stage2Game();
         String output = runCli(game, choices);
         check(game.isFinished() && !game.isVictory() && output.contains("Result: DEFEAT"), "Defeat result.");
         check(game.getTurn() == 18 && game.getPaidCount() == 0 && game.getServedCount() == 0
@@ -265,4 +265,15 @@ public final class Stage2Tests {
         check(output.contains("paid average N/A") && output.contains("Regular")
                 && output.contains("VIP") && output.contains("Critic"), "Defeat report includes metrics and types.");
     }
+
+    private static GameController stage2Game() {
+        return new GameController(List.of(
+                new Customer(1),
+                new VIPCustomer(2),
+                new Customer(3),
+                new CriticCustomer(4),
+                new Customer(5),
+                new Customer(6)
+        ), false);
+        }
 }

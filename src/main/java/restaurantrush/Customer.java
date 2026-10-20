@@ -13,14 +13,16 @@ public class Customer {
     public Customer(int id) { this.id = id; }
 
     public MenuItem chooseMeal(List<MenuItem> menu) {
-        if (id % 3 == 0) {
-            for (MenuItem item : menu) {
-                if (item instanceof ComboMeal) {
-                    return item;
-                }
-            }
+        if (menu == null || menu.isEmpty()) {
+            throw new IllegalArgumentException("Menu cannot be empty.");
         }
-        return menu.get((id - 1) % 3);
+
+        if (id % 3 == 0 && menu.size() >= 6) {
+            int comboIndex = 3 + ((id / 3 - 1) % 3);
+            return menu.get(comboIndex);
+        }
+
+        return menu.get(((id - 1) % 3) % menu.size());
     }
 
     public String getTypeName() { return "Regular"; }

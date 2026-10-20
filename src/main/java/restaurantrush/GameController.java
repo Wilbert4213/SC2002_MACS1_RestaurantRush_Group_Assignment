@@ -15,14 +15,22 @@ public class GameController {
     public static final int TARGET_SATISFACTION = 60;
 
     // Regular and VIP customers cycle through this order; Critics choose their preference.
-    private final List<MenuItem> menu = createMenu();
-
+    private final boolean stage3Enabled;
+    private final List<MenuItem> menu;
+    
     private static List<MenuItem> createMenu() {
         MenuItem pasta = new MenuItem("Pasta", 1800, 2);
         MenuItem burger = new MenuItem("Burger", 1500, 1);
         MenuItem salad = new MenuItem("Salad", 900, 1);
-        ComboMeal combo = new ComboMeal(salad, pasta);
-        return List.of(pasta, burger, salad, combo);
+
+        ComboMeal saladBurger = new ComboMeal(salad, burger);
+        ComboMeal saladPasta = new ComboMeal(salad, pasta);
+        ComboMeal burgerPasta = new ComboMeal(burger, pasta);
+
+        return List.of(
+            pasta, burger, salad,
+            saladBurger, saladPasta, burgerPasta
+        );
     }
 
     private final List<Customer> customers = new ArrayList<>();
@@ -44,13 +52,31 @@ public class GameController {
     private int happyHourStartTurn = -1;
     
     public GameController() {
-        this(List.of(new Customer(1), new VIPCustomer(2), new Customer(3),
-                new CriticCustomer(4), new Customer(5), new Customer(6)));
+        this(List.of(
+            new Customer(1),
+            new VIPCustomer(2),
+            new Customer(3),
+            new CriticCustomer(4),
+            new Customer(5),
+            new Customer(6)
+        ), true);
     }
 
-    // Tests can replay the regular-only Stage 1 setup using the same turn rules.
     GameController(List<Customer> scheduledCustomers) {
+        this(scheduledCustomers, false);
+    }
+
+    GameController(List<Customer> scheduledCustomers, boolean stage3Enabled) {
         this.scheduledCustomers = List.copyOf(scheduledCustomers);
+        this.stage3Enabled = stage3Enabled;
+
+        this.menu = stage3Enabled
+            ? createMenu()
+            : List.of(
+                new MenuItem("Pasta", 1800, 2),
+                new MenuItem("Burger", 1500, 1),
+                new MenuItem("Salad", 900, 1)
+            );
     }
 
     public void beginTurn() {
@@ -145,7 +171,7 @@ public class GameController {
 
     public List<String> finishTurn() {
         requireActiveTurn();
-        if (host.isAvailable() || waiter.isAvailable() || chef.isAvailable()) {
+        if ((stage3Enabled && host.isAvailable()) || waiter.isAvailable() || chef.isAvailable()) {
             throw new IllegalStateException("Choose a task or Wait for the Host, Waiter and Chef first.");
         }
         List<String> events = new ArrayList<>();
@@ -192,14 +218,14 @@ public class GameController {
     private void requireWaiterPhase() {
         requireActiveTurn();
 
-        if (host.isAvailable()) {
+        if (stage3Enabled && host.isAvailable()) {
             throw new IllegalArgumentException(
-                    "The Host must act or wait before the Waiter.");
+                "The Host must act or wait before the Waiter.");
         }
 
         if (!chef.isAvailable()) {
             throw new IllegalArgumentException(
-                    "The Waiter must act before the Chef.");
+                "The Waiter must act before the Chef.");
         }
     }
 
@@ -221,10 +247,10 @@ public class GameController {
     }
 
     public boolean canActivateHappyHour() {
-        return turnActive && !happyHourUsed
-                && host.isAvailable()
-                && waiter.isAvailable()
-                && chef.isAvailable();
+        return stage3Enabled && turnActive && !happyHourUsed
+        && host.isAvailable()
+        && waiter.isAvailable()
+        && chef.isAvailable();
     }
 
     public void activateHappyHour() {
@@ -273,6 +299,10 @@ public class GameController {
     public OptionalDouble getAverageSatisfaction() {
         return paidCount == 0 ? OptionalDouble.empty()
                 : OptionalDouble.of((double) paidSatisfactionTotal / paidCount);
+    }
+
+    public boolean isStage3Enabled() {
+        return stage3Enabled;
     }
 
     public int getTurn() { return turn; }

@@ -24,7 +24,7 @@ public class RestaurantRush {
     }
 
     public void run() {
-        output.println("Restaurant Rush - Stage 3");
+        output.println(game.isStage3Enabled() ? "Restaurant Rush - Stage 3" : "Restaurant Rush - Legacy Mode");
         output.println("18 turns, 2 tables. Target: 4 paid customers, $45.00 revenue, 60 average satisfaction.");
         output.println("Customers choose their own food. Enter help at either prompt for commands.");
         output.println("Regulars lose 8 satisfaction while waiting. VIPs lose 5 and get 10% off.");
@@ -37,11 +37,19 @@ public class RestaurantRush {
         while (!game.isFinished()) {
             game.beginTurn();
             displayState();
-            if (!chooseHappyHour()) {
-                output.println("Input ended; game stopped.");
-                return;
+            if (game.isStage3Enabled()) {
+                if (!chooseHappyHour()) {
+                    output.println("Input ended; game stopped.");
+                    return;
+                }
+
+                if (!chooseHostTask()) {
+                    output.println("Input ended; game stopped before completion. No victory or defeat recorded.");
+                    return;
+                }
             }
-            if (!chooseHostTask() || !chooseTask(true) || !chooseTask(false)) {
+
+            if (!chooseTask(true) || !chooseTask(false)) {
                 output.println("Input ended; game stopped before completion. No victory or defeat recorded.");
                 return;
             }
@@ -170,7 +178,7 @@ public class RestaurantRush {
             : game.isHappyHourUsed()
                 ? "Already used"
                 : "Available"));
-                
+
         for (Table table : game.getTables()) {
             output.println("Table " + table.getId() + ": " + (table.isFree() ? "free"
                     : "C" + table.getCustomer().getId()));
