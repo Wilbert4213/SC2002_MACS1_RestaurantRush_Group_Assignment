@@ -6,12 +6,7 @@ Repository: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_As
 
 ## Current stage
 
-Stage 3 adds Host seating, ComboMeal composition, and Happy Hour to the completed Stage 2 game.
-
-Stages 1 and 2 have been verified, merged, and published under their respective
-`stage-1` and `stage-2` Git tags. Stage 3 has passed all 39 local automated checks
-across the three stages and is currently on `stage-3-development`, awaiting final
-review, merge, and the `stage-3` tag.
+All three stages have been implemented, verified, merged into `main`, and published under their respective `stage-1`, `stage-2`, and `stage-3` Git tags. All 39 automated checks passed locally using Java 17.
 
 ## Build, run, and test
 
@@ -216,8 +211,8 @@ group if it is not available in your environment. Recheck requirements against
 the manual before releasing each stage.
 
 1. Start with a clean working tree. Fetch and fast-forward `main` from `origin/main`.
-2. Create your feature branch from the updated `main`; the current Stage 3 branch is
-   `stage-3-development`. Use `codex/` for agent-created branches unless instructed otherwise.
+2. For future changes, create a feature branch from the updated `main`. Use
+   `codex/` for agent-created branches unless instructed otherwise.
 3. Implement only the current stage. Keep the CLI for parsing/display and put
    rules in domain and control classes. Keep responsibilities clear and code
    straightforward; add abstractions only when they serve actual behaviour.
@@ -232,28 +227,10 @@ the manual before releasing each stage.
 7. After the verified PR is merged, test the merged `main` and create its annotated
    stage tag. Push that specific tag. Existing stage tags are immutable snapshots.
 
-Example start:
-
-```sh
-git switch main
-git fetch origin
-git pull --ff-only origin main
-git switch -c stage-3-development
-```
-
-Example release **after Stage 3 has been reviewed and merged**:
-
-```sh
-git switch main
-git pull --ff-only origin main
-bash test.sh
-git tag -a stage-3 -m "Stage 3: verified Host, combos, and Happy Hour"
-git push origin stage-3
-```
-
-Do not run release commands while review is pending. For later stages use their
-corresponding branch and tag. Always verify a stage from its tag in a separate
-checkout before submission; the source at that tag must compile and run on its own.
+All three stage releases are complete. The published `stage-1`, `stage-2`,
+and `stage-3` tags preserve their respective verified snapshots. For future
+changes, use a separate feature branch and leave the existing tags unchanged.
+Before submission, verify each stage independently from its tag.
 
 ## Stage requirements and transitions
 
@@ -264,7 +241,7 @@ incrementally. A description of a stage alone is not evidence of its implementat
 | --- | --- | --- | --- |
 | 1 | Regular customers, menu, Waiter/Chef/Cashier, full base game, both endings | `stage-1` | Verified and merged; tag published |
 | 2 | VIP and Critic customer behaviour through customer polymorphism | `stage-2` | Verified, merged, and tagged |
-| 3 | Host, ComboMeal composition, Happy Hour pricing policy | `stage-3` | Implemented and tested; merge and tag pending |
+| 3 | Host, ComboMeal composition, Happy Hour pricing policy | `stage-3` | Verified, merged, and tagged |
 
 ### Stage 1 baseline
 
@@ -308,8 +285,7 @@ the mixed Stage 2 run demonstrates the new patience, pricing, and preference.
 
 ### Transition 2 → 3 — implemented and tested
 
-[Compare Stage 2 with the Stage 3 development branch](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/compare/stage-2...stage-3-development).
-After Stage 3 is merged and tagged, use `stage-2...stage-3` for the immutable tag comparison.
+[Compare Stage 2 with Stage 3](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/compare/stage-2...stage-3).
 
 | New file | Responsibility |
 | --- | --- |
@@ -340,8 +316,7 @@ Customer meal selection was also corrected to support smaller test menus.
 | Stage 3 | 15 | Passed |
 | **Total** | **39** | **All passed** |
 
-**Release status:** Stage 3 is implemented and tested on `stage-3-development`.
-Merge into `main` and publication of the `stage-3` tag remain pending.
+**Release status:** Stage 3 has been implemented, tested, merged into `main`, and published under the `stage-3` Git tag.
 
 ## Assessment and submission ownership
 
