@@ -6,15 +6,12 @@ Repository: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_As
 
 ## Current stage
 
-Stage 2 adds VIP and Critic customer behaviour to the complete Stage 1 base game.
-The default game still has three menu items, two tables, Waiter, Chef, Cashier,
-satisfaction, abandonment, payment, and both endings. Stage 3 is not implemented.
+Stage 3 adds Host seating, ComboMeal composition, and Happy Hour to the completed Stage 2 game.
 
-Stage 1 is manually verified, merged, and available at the immutable
-[`stage-1` tag](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/tree/stage-1).
-Stage 2 was manually verified by the project owner on 14 October 2026 and awaits
-PR merging on `codex/stage-2`.
-Create `stage-2` on the verified commit in `main` after merging its PR.
+Stages 1 and 2 have been verified, merged, and published under their respective
+`stage-1` and `stage-2` Git tags. Stage 3 has passed all 39 local automated checks
+across the three stages and is currently on `stage-3-development`, awaiting final
+review, merge, and the `stage-3` tag.
 
 ## Build, run, and test
 
@@ -56,12 +53,13 @@ $tests = Get-ChildItem src/test/java/restaurantrush/*.java | ForEach-Object Full
 javac --release 17 -Xlint:all -Werror -cp build/classes -d build/test-classes $tests
 java -cp "build/classes;build/test-classes" restaurantrush.Stage1Tests
 java -cp "build/classes;build/test-classes" restaurantrush.Stage2Tests
+java -cp "build/classes;build/test-classes" restaurantrush.Stage3Tests
 ```
 
 Run tests from the repository folder so the replay files can be found. For a
 clean build in PowerShell, remove `build/` before compiling.
 
-## Playing Stage 2
+## Playing Stage 1 and Stage 2 (legacy mode)
 
 At each turn the CLI shows arrivals, revenue, average satisfaction of paid
 customers, the waiting queue, table occupants, every customer's satisfaction and
@@ -149,10 +147,12 @@ can pay. Tables remain occupied throughout preparation, eating, and waiting to p
 
 ## Tests and reproducible runs
 
-`bash test.sh` runs 24 checks: the original 14 Stage 1 checks and 10 Stage 2 checks.
-It runs the original Stage 1 regression suite with an explicit
-regular-only schedule and the new Stage 2 suite with mixed customers. The same
-controller, domain objects, and CLI are exercised; no stable turn rule was rewritten.
+`bash test.sh` runs 39 automated checks across all three stages: 14 Stage 1
+checks, 10 Stage 2 checks, and 15 Stage 3 checks. The earlier suites use legacy
+game configurations to preserve their original menu, turn rules, and CLI
+expectations. The Stage 3 suite verifies Host actions, ComboMeal calculations,
+Happy Hour pricing and satisfaction recovery, and complete gameplay outcomes.
+All 39 checks passed locally using Java 17.
 
 The Stage 1 regression suite checks the manual's Pasta example (seat turn 1, order turn
 2, READY turn 3, serve turn 4, READY_TO_PAY turn 5, pay turn 6 at satisfaction 76),
@@ -195,11 +195,11 @@ bash test.sh
 bash run.sh < tests/replays/victory.txt
 ```
 
-Return to the main project folder before continuing Stage 2 work.
+Return to the main project folder before continuing development.
 
 The terminal [Stage 2 verification plan](tests/STAGE2_VERIFICATION.md) provides
 commands, expected outcomes, and per-turn VIP/Critic checks.
-For manual verification, run `bash run.sh`, enter `help`, and play a full game.
+For manual verification of legacy gameplay, run a Stage 2 checkout with `bash run.sh`, enter `help`, and play a full game.
 Try an invalid choice, observe READY → SERVED → READY_TO_PAY → PAID across turns,
 and use the replay files if you want to compare exact expected results.
 
@@ -216,8 +216,8 @@ group if it is not available in your environment. Recheck requirements against
 the manual before releasing each stage.
 
 1. Start with a clean working tree. Fetch and fast-forward `main` from `origin/main`.
-2. Create your feature branch from the updated `main`; the current Stage 2 branch is
-   `codex/stage-2`. Use `codex/` for agent-created branches unless instructed otherwise.
+2. Create your feature branch from the updated `main`; the current Stage 3 branch is
+   `stage-3-development`. Use `codex/` for agent-created branches unless instructed otherwise.
 3. Implement only the current stage. Keep the CLI for parsing/display and put
    rules in domain and control classes. Keep responsibilities clear and code
    straightforward; add abstractions only when they serve actual behaviour.
@@ -238,17 +238,17 @@ Example start:
 git switch main
 git fetch origin
 git pull --ff-only origin main
-git switch -c codex/stage-2
+git switch -c stage-3-development
 ```
 
-Example release **after Stage 2 has been reviewed and merged**:
+Example release **after Stage 3 has been reviewed and merged**:
 
 ```sh
 git switch main
 git pull --ff-only origin main
 bash test.sh
-git tag -a stage-2 -m "Stage 2: verified customer behaviour"
-git push origin stage-2
+git tag -a stage-3 -m "Stage 3: verified Host, combos, and Happy Hour"
+git push origin stage-3
 ```
 
 Do not run release commands while review is pending. For later stages use their
@@ -263,8 +263,8 @@ incrementally. A description of a stage alone is not evidence of its implementat
 | Stage | Scope | Required Git tag | Status |
 | --- | --- | --- | --- |
 | 1 | Regular customers, menu, Waiter/Chef/Cashier, full base game, both endings | `stage-1` | Verified and merged; tag published |
-| 2 | VIP and Critic customer behaviour through customer polymorphism | `stage-2` | Manually verified; merge and release tag pending |
-| 3 | Host, ComboMeal composition, Happy Hour pricing policy | `stage-3` | Not started |
+| 2 | VIP and Critic customer behaviour through customer polymorphism | `stage-2` | Verified, merged, and tagged |
+| 3 | Host, ComboMeal composition, Happy Hour pricing policy | `stage-3` | Implemented and tested; merge and tag pending |
 
 ### Stage 1 baseline
 
@@ -280,8 +280,7 @@ implementation. That tag preserves the original code unchanged.
 
 ### Transition 1 → 2 — implemented
 
-[Compare verified Stage 1 with the Stage 2 feature branch](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/compare/stage-1...codex/stage-2).
-After Stage 2 is released, use `stage-1...stage-2` for the immutable tag comparison.
+[Compare Stage 1 with Stage 2](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/compare/stage-1...stage-2).
 
 | New file | Responsibility |
 | --- | --- |
@@ -307,39 +306,46 @@ arrival timing, preparation, serving, eating, payment, abandonment flow, tables,
 and victory criteria remain the same. The original 14 regression checks pass;
 the mixed Stage 2 run demonstrates the new patience, pricing, and preference.
 
-### Transition 2 → 3 — pending
+### Transition 2 → 3 — implemented and tested
 
-Add a Host who seats at most one queued customer per turn **in addition to** the
-Waiter's task; the Waiter can still seat. A ComboMeal composes two existing items,
-sums their preparation units, and costs 90% of their combined price rounded to
-the nearest cent. Document how customers choose combos.
+[Compare Stage 2 with the Stage 3 development branch](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/compare/stage-2...stage-3-development).
+After Stage 3 is merged and tagged, use `stage-2...stage-3` for the immutable tag comparison.
 
-Happy Hour can be activated once at the start of a turn, lasts that turn and the
-next, and displays its remaining duration. Each active turn restores 15
-satisfaction at turn start to customers waiting for a table or food, capped at
-100. Orders placed during Happy Hour receive 20% off; apply VIP discount first
-and lock the bill when ordering. It does not reprice existing orders or affect
-departed customers. Example: VIP Burger during Happy Hour is $10.80. Store money
-in integer cents and document rounding where fractional prices arise.
-
-**Complete this transition record in the Stage 3 PR:**
-
-| Evidence | Actual change |
+| New file | Responsibility |
 | --- | --- |
-| New files | Pending; list actual paths and responsibilities |
-| Existing files changed | Pending; list each path and why it changed |
-| Deleted files | Pending; list paths and reasons, or explicitly state none |
-| Commit/compare link | Pending until the release exists; then link `stage-2...stage-3` on GitHub |
-| Regression evidence | Pending; record earlier behaviour checks and new feature checks |
+| `src/main/java/restaurantrush/Host.java` | Adds an independent one-task-per-turn Host for seating customers |
+| `src/main/java/restaurantrush/ComboMeal.java` | Composes two existing dishes, sums their preparation units, and prices the combo at 90% of the combined price |
+| `src/test/java/restaurantrush/Stage3Tests.java` | Adds 15 automated checks for Stage 3 mechanics, timing, pricing, and CLI outcomes |
 
-For both transitions, replace placeholders with the real changes and a working
-commit or compare link. Explain any broad rewrite of stable rules and demonstrate
-that earlier behaviour is preserved. Small setup/registration edits are expected;
-do not introduce unused future-stage machinery in an earlier snapshot.
+| Existing file changed | Reason |
+| --- | --- |
+| `src/main/java/restaurantrush/Customer.java` | Supports deterministic combo selection, Happy Hour discounts, satisfaction recovery, and smaller legacy menus |
+| `src/main/java/restaurantrush/GameController.java` | Adds the expanded menu, Host and Happy Hour rules, and a legacy mode for earlier stages |
+| `src/main/java/restaurantrush/RestaurantRush.java` | Adds Stage 3 prompts while preserving legacy CLI input sequences |
+| `src/main/java/restaurantrush/Waiter.java` | Passes Happy Hour status when taking orders |
+| `src/test/java/restaurantrush/Stage2Tests.java` | Uses legacy mode to preserve original Stage 2 test expectations |
+| `test.sh` | Runs all three automated test suites |
+
+**Deleted files:** none. No earlier-stage source file was removed or renamed.
+
+**Compatibility:** Stage 3 additions initially affected earlier regression tests
+because of the expanded menu and mandatory Host phase. Existing Java classes were
+revised to preserve the original three-item menu and turn flow in legacy mode.
+Customer meal selection was also corrected to support smaller test menus.
+
+| Test suite | Checks | Local result |
+| --- | --- | --- |
+| Stage 1 | 14 | Passed |
+| Stage 2 | 10 | Passed |
+| Stage 3 | 15 | Passed |
+| **Total** | **39** | **All passed** |
+
+**Release status:** Stage 3 is implemented and tested on `stage-3-development`.
+Merge into `main` and publication of the `stage-3` tag remain pending.
 
 ## Assessment and submission ownership
 
-Part 7 allocates marks as follows. This Stage 2 work covers code, reproducible
+Part 7 allocates marks as follows. This project work covers code, reproducible
 tests, and repository practice. Another group member will handle the PDF report
 and UML; coordinate later so the final diagrams match Stage 3 code.
 
