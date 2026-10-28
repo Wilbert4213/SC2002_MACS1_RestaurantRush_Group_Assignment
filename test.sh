@@ -8,3 +8,4 @@ rm -rf build/test-classes/restaurantrush
 "$JAVA_BIN" -cp build/classes:build/test-classes restaurantrush.Stage1Tests
 "$JAVA_BIN" -cp build/classes:build/test-classes restaurantrush.Stage2Tests
 "$JAVA_BIN" -cp build/classes:build/test-classes restaurantrush.Stage3Tests
+"$JAVA_BIN" -cp build/classes:build/test-classes restaurantrush.VideoReplayTests
