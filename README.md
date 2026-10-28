@@ -8,6 +8,61 @@ Repository: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_As
 
 All three stages have been implemented, verified, merged into `main`, and published under their respective `stage-1`, `stage-2`, and `stage-3` Git tags. All 39 automated checks passed locally using Java 17.
 
+## Video: victory and defeat runs
+
+Open a terminal in this project folder. These runs use the Stage 3 game and fixed
+manager choices. The game calculates the results normally. Press **Enter once per
+turn** to play the next turn. The choices appear on screen. You can stop and
+explain between turns. Use Ctrl+C to stop a run early.
+
+### Victory run
+
+```sh
+bash video.sh victory
+```
+
+Press Enter 18 times to finish. The final result is **VICTORY**: 5 paid customers,
+$88.80 revenue, and 83.80 average satisfaction.
+
+What to explain in the video:
+
+1. **Turn 1:** We start Happy Hour. The Host seats C1. The Waiter takes the order
+   and the Chef starts cooking in the same turn. Pasta costs $14.40 after the discount.
+2. **Turns 2–5:** The Chef finishes the Pasta on turn 2. The Waiter serves it on
+   turn 3. C1 finishes eating on turn 4 and pays on turn 5. The table stays occupied until payment.
+3. **Turns 4–7:** C2 is a VIP. C2 orders a Burger for $13.50 and pays on turn 7.
+   The VIP discount is 10%; Happy Hour has already ended.
+4. **Turns 7–11:** C3 orders the Salad + Burger Combo for $21.60. It needs two
+   Chef preparation units. It is served on turn 9 and paid on turn 11.
+5. **Turns 10–15:** C4 is a Critic and chooses the Salad + Pasta Combo. It needs
+   three preparation units. On turn 13, the Host seats C5 while the Waiter serves C4.
+6. **Turn 18:** Show the result. Five customers paid. Revenue and average
+   satisfaction are above the targets, so all three victory conditions are met.
+
+### Defeat run
+
+```sh
+bash video.sh defeat
+```
+
+Press Enter 18 times to finish. The final result is **DEFEAT**: 0 paid customers,
+$0.00 revenue, no paid satisfaction average, and 2 unhappy departures.
+
+What to explain in the video:
+
+1. We choose not to start Happy Hour. The Host, Waiter, and Chef all wait each turn.
+2. Nobody is seated, served, or charged. Waiting customers lose satisfaction.
+3. **Turn 13:** Regular C1 reaches zero satisfaction and leaves without paying.
+4. **Turn 18:** Critic C4 also leaves. The VIP remains waiting because VIPs lose
+   satisfaction more slowly. The game still completes all 18 turns.
+5. Show the final result. No customers paid and revenue is $0.00, so the targets
+   are not met. The paid satisfaction average is `N/A` because nobody paid.
+
+The replay inputs are in `tests/replays/video-victory.txt` and
+`tests/replays/video-defeat.txt`. They contain the actual commands sent to the
+normal CLI. The results are not printed in advance or substituted for gameplay.
+After recording, add the victory and defeat timestamps to the video table below.
+
 ## Build, run, and test
 
 Install a **JDK 17 or newer**. The code targets Java 17. The JDK is a global
@@ -49,6 +104,7 @@ javac --release 17 -Xlint:all -Werror -cp build/classes -d build/test-classes $t
 java -cp "build/classes;build/test-classes" restaurantrush.Stage1Tests
 java -cp "build/classes;build/test-classes" restaurantrush.Stage2Tests
 java -cp "build/classes;build/test-classes" restaurantrush.Stage3Tests
+java -cp "build/classes;build/test-classes" restaurantrush.VideoReplayTests
 ```
 
 Run tests from the repository folder so the replay files can be found. For a
@@ -142,12 +198,13 @@ can pay. Tables remain occupied throughout preparation, eating, and waiting to p
 
 ## Tests and reproducible runs
 
-`bash test.sh` runs 39 automated checks across all three stages: 14 Stage 1
+`bash test.sh` runs 42 automated checks: 14 Stage 1
 checks, 10 Stage 2 checks, and 15 Stage 3 checks. The earlier suites use legacy
 game configurations to preserve their original menu, turn rules, and CLI
 expectations. The Stage 3 suite verifies Host actions, ComboMeal calculations,
 Happy Hour pricing and satisfaction recovery, and complete gameplay outcomes.
-All 39 checks passed locally using Java 17.
+The three additional video checks run both recorded games through the Stage 3 CLI
+and verify their results, turn-by-turn pauses, and early termination.
 
 The Stage 1 regression suite checks the manual's Pasta example (seat turn 1, order turn
 2, READY turn 3, serve turn 4, READY_TO_PAY turn 5, pay turn 6 at satisfaction 76),
@@ -161,13 +218,18 @@ mixed arrivals, abandonment, unpaid revenue exclusion, input retries, and full
 victory/defeat replays. The original 14 Stage 1 checks retain their expected
 regular-only results through a package-private schedule constructor used by tests.
 
-Replay inputs exercise the real CLI with one Waiter line and one Chef line per
-turn. Reproduce them with:
+These older replay inputs are for the Stage 2 CLI, which takes one Waiter line
+and one Chef line per turn. To play them, use a Stage 2 checkout:
 
 ```sh
+git worktree add --detach ../RestaurantRush-stage-2 stage-2
+cd ../RestaurantRush-stage-2
 bash run.sh < tests/replays/stage2-victory.txt
 bash run.sh < tests/replays/stage2-defeat.txt
 ```
+
+Return to the current project folder afterwards. Stage 3's CLI also asks for Host
+and Happy Hour choices, so the Stage 2 inputs cannot be fed to it directly.
 
 | Fixture | Turns | Served | Paid | Unhappy departures | Revenue | Paid average | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- |
