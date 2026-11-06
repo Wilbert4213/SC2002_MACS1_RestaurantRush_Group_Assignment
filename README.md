@@ -4,7 +4,7 @@ Java command-line restaurant management game for the SC2002 group assignment.
 
 Repository: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment>
 
-Hong Yi's AI History <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/blob/hongyi/ai-history/hongyi/ai-history/chat.md>
+Hong Yi's AI History: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/blob/hongyi/ai-history/hongyi/ai-history/chat.md>
 
 ## Current stage
 
