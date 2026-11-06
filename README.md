@@ -4,6 +4,8 @@ Java command-line restaurant management game for the SC2002 group assignment.
 
 Repository: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment>
 
+Hong Yi's AI History <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/blob/hongyi/ai-history/hongyi/ai-history/chat.md>
+
 ## Current stage
 
 All three stages have been implemented, verified, merged into `main`, and published under their respective `stage-1`, `stage-2`, and `stage-3` Git tags. All 39 automated checks passed locally using Java 17.
@@ -331,8 +333,6 @@ and UML; coordinate later so the final diagrams match Stage 3 code.
 | Design consideration | 15 |
 | Implementation code | 20 |
 | Thinking and development process | 20 |
-
-[Stage 3 AI History](https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/blob/ai-history/ai-history/stage-3/chat-01.md)
 
 Before final submission, the group must provide runnable tags for all three
 stages, completed transition records, source/build instructions, the PDF report,
