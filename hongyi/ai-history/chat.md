@@ -3,14 +3,14 @@ User: Hong Yi
 AI assistant: ChatGPT  
 =======================================================================================
 1. Planning the Stage 3 extension
+-----------------------------------------------------------------------------------------------
    
 > User: I have completed and tested Stages 1 and 2. I want to implement Stage 3 on top of the existing Java game. What features must be added?
 
 > AI: Stage 3 adds three main mechanics: a Host who seats customers independently of the Waiter, ComboMeal menu items that combine two dishes with summed preparation requirements and a 10% discount, and a once-per-game Happy Hour lasting two turns, with order discounts and satisfaction restoration.
 
------------------------------------------------------------------------------------------------
-
 2. Key ideas — Organising the Stage 3 design discussion
+-----------------------------------------------------------------------------------------------
    
 User: What key design ideas should I discuss for Stage 3, particularly the Host, ComboMeal, and Happy Hour features?
 
