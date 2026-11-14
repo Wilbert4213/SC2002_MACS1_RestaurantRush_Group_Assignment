@@ -360,5 +360,7 @@ Add these video timestamps here once the recording is available:
 | VIP or Critic behaviour | Pending |
 | Stage 3 feature | Pending |
 | Reproducible victory and defeat | Pending |
-| Stage tag comparisons and diagrams | Pending |
+| Stage tag comparisons | 
+| Class diagrams + Thomas reflection | 09:06 |
+| Sequence diagrams + Wilbert reflection | Pending |
 
