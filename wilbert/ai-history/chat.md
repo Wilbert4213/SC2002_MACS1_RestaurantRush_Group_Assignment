@@ -4,7 +4,7 @@ User: Wilbert
 AI assistant: ChatGPT  
 Project: SC2002 Restaurant Rush — UML Sequence Diagram  
 
-## 1. Key ideas — Identifying objects for the Stage 1 sequence diagram
+## 1. Identifying objects for the Stage 1 sequence diagram
 
 > User: For the Stage 1 restaurant game, which objects should appear in a sequence diagram showing a customer from arrival to payment?
 
@@ -12,7 +12,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 2. Key ideas — Mapping the turn-based flow
+## 2. Mapping the turn-based flow
 
 > User: How should I organise the interactions so the sequence diagram follows the required order of events in each turn?
 
@@ -20,7 +20,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 3. Key ideas — Representing the Pasta preparation delay
+## 3. Representing the Pasta preparation delay
 
 > User: A regular customer orders Pasta, which takes two preparation units. How do I make the READY-to-SERVED timing clear?
 
@@ -28,7 +28,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 4. Key ideas — Showing the payment lifecycle
+## 4.Showing the payment lifecycle
 
 > User: What interaction should the diagram include between serving the customer and freeing their table?
 
@@ -36,7 +36,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 5. Key ideas — Extending the diagram for a VIP in Stage 2
+## 5. Extending the diagram for a VIP in Stage 2
 
 > User: How can I show Stage 2's VIP behaviour without creating a completely different service flow?
 
@@ -44,7 +44,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 6. Key ideas — Demonstrating polymorphism rather than type checking
+## 6. Demonstrating polymorphism rather than type checking
 
 > User: What would make the VIP section demonstrate object-oriented design instead of simply showing a discounted number?
 
@@ -52,7 +52,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 7. Key ideas — Choosing UML interaction fragments
+## 7. Choosing UML interaction fragments
 
 > User: My diagram is becoming very long. Which UML fragments help simplify it without losing the important logic?
 
@@ -60,7 +60,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 8. Key ideas — Connecting manager choices to the game result
+## 8. Connecting manager choices to the game result
 
 > Use: What should I emphasise so the sequence diagram shows that the manager's choices affect the outcome?
 
@@ -68,7 +68,7 @@ Project: SC2002 Restaurant Rush — UML Sequence Diagram
 
 ---
 
-## 9. Key ideas — Checking the sequence diagram against the code
+## 9. Checking the sequence diagram against the code
 
 > User: What should I verify before submitting the Stage 2 sequence diagram?
 
