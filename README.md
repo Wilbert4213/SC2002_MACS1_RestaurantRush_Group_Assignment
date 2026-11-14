@@ -8,6 +8,8 @@ Hong Yi's AI History: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRus
 
 Wijie's AI History: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/tree/wijie/ai-history/ai-history/wijie>
 
+Wilbert's AI History: <https://github.com/Wilbert4213/SC2002_MACS1_RestaurantRush_Group_Assignment/blob/wilbert/ai-history/wilbert/ai-history/chat.md>
+
 ## Current stage
 
 All three stages have been implemented, verified, merged into `main`, and published under their respective `stage-1`, `stage-2`, and `stage-3` Git tags. All 39 automated checks passed locally using Java 17.
