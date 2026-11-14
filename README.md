@@ -354,12 +354,14 @@ Add these video timestamps here once the recording is available:
 
 | Video segment | Timestamp |
 | --- | --- |
-| Launch from the submitted project | Pending |
-| Meaningful manager choices with constrained staff | Pending |
+| Launch from the submitted project | 1:15 |
+| Meaningful manager choices | 1:34 |
+| Decision where staff are constrained + Ayush reflection | 1:54 |
 | READY → SERVED → payment | Pending |
-| VIP or Critic behaviour | Pending |
-| Stage 3 feature | Pending |
-| Reproducible victory and defeat | Pending |
+| VIP or Critic behaviour + Wi Jie reflection| Pending |
+| Stage 3 feature | 5:20 |
+| Reproducible victory | 6:11 |
+| Reproducible defeat + Hong Yi reflection| 7:50 |
 | Stage tag comparisons | 
 | Class diagrams + Thomas reflection | 09:06 |
 | Sequence diagrams + Wilbert reflection | 11:06 |
