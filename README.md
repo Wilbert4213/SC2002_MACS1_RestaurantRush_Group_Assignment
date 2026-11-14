@@ -362,5 +362,5 @@ Add these video timestamps here once the recording is available:
 | Reproducible victory and defeat | Pending |
 | Stage tag comparisons | 
 | Class diagrams + Thomas reflection | 09:06 |
-| Sequence diagrams + Wilbert reflection | Pending |
+| Sequence diagrams + Wilbert reflection | 11:06 |
 
