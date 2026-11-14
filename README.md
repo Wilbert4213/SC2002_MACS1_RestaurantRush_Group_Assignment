@@ -357,8 +357,8 @@ Add these video timestamps here once the recording is available:
 | Launch from the submitted project | 1:15 |
 | Meaningful manager choices | 1:34 |
 | Decision where staff are constrained + Ayush reflection | 1:54 |
-| READY → SERVED → payment | Pending |
-| VIP or Critic behaviour + Wi Jie reflection| Pending |
+| READY → SERVED → payment | 2:40 |
+| VIP or Critic behaviour + Wi Jie reflection| 3:56 |
 | Stage 3 feature | 5:20 |
 | Reproducible victory | 6:11 |
 | Reproducible defeat + Hong Yi reflection| 7:50 |
